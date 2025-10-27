@@ -8,7 +8,7 @@ public class MainActivity1 extends ComponentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.mainlayout);
+        setContentView(R.layout.weekschedule);
         // some changes
     }
 }
