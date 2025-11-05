@@ -4,14 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/login_background"
-    tools:context=".MainActivity">
+    android:background="#FFB6C1"
+    tools:context=".MainActivity1">
 
     <ImageView
         android:id="@+id/profile_icon"
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:layout_marginTop="132dp"
+        android:layout_marginTop="168dp"
         android:contentDescription="User Icon"
         android:src="@drawable/baseline_account_circle_24"
         app:layout_constraintEnd_toEndOf="parent"
@@ -52,7 +52,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/username" />
 
-    git status<Button
+    <Button
         android:id="@+id/loginButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -72,23 +72,30 @@
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginStart="54dp"
+        android:layout_marginTop="522dp"
+        android:layout_marginEnd="215dp"
+        android:layout_marginBottom="190dp"
         android:text="Don't have an account?"
-        app:layout_constraintEnd_toStartOf="@id/textView2"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintHorizontal_chainStyle="packed"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/loginButton" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="Register"
-        android:textColor="#FFFFFF"
+        android:layout_marginStart="242dp"
+        android:layout_marginTop="520dp"
+        android:layout_marginEnd="64dp"
+        android:layout_marginBottom="187dp"
+        android:text="Register here"
+        android:textColor="@color/purple_500"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/textView"
-        app:layout_constraintTop_toTopOf="@id/textView" />
-
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
