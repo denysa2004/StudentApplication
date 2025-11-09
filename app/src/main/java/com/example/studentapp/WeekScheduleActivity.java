@@ -5,9 +5,16 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,7 +24,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class WeekScheduleActivity extends ComponentActivity {
@@ -25,6 +34,16 @@ public class WeekScheduleActivity extends ComponentActivity {
     private FirebaseAuth auth;
     private FirebaseFirestore db;
 
+    private ScrollView weekScrollView, dayScrollView;
+    private Switch daySwitch;
+    private Spinner daySpinner;
+    private LinearLayout dayTimeSlotsContainer;
+    private TextView selectedDayTitle;
+
+    private String[] daysOfWeek = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
+    private String[] timeSlots = {"08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"};
+
+    private Map<String, Map<String, SubjectData>> scheduleData = new HashMap<>();
 
     private ImageButton addMon8, addTue8, addWed8, addThu8, addFri8,
             addMon10, addTue10, addWed10, addThu10, addFri10,
@@ -42,6 +61,157 @@ public class WeekScheduleActivity extends ComponentActivity {
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
+        initializeViews();
+        setupDaySwitch();
+        setupDaySpinner();
+        setupLogoutButton();
+        initializeScheduleButtons();
+        loadScheduleFromFirebase();
+    }
+
+    private void initializeViews() {
+        weekScrollView = findViewById(R.id.weekScrollView);
+        dayScrollView = findViewById(R.id.dayScrollView);
+        daySwitch = findViewById(R.id.switch1);
+        daySpinner = findViewById(R.id.daySpinner);
+        dayTimeSlotsContainer = findViewById(R.id.dayTimeSlots);
+        selectedDayTitle = findViewById(R.id.selectedDayTitle);
+    }
+
+    private void setupDaySwitch() {
+        daySwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                // Show day view
+                weekScrollView.setVisibility(View.GONE);
+                dayScrollView.setVisibility(View.VISIBLE);
+                daySpinner.setVisibility(View.VISIBLE);
+                updateDayView(daysOfWeek[0]);
+            } else {
+                // Show week view
+                weekScrollView.setVisibility(View.VISIBLE);
+                dayScrollView.setVisibility(View.GONE);
+                daySpinner.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void setupDaySpinner() {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, daysOfWeek);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        daySpinner.setAdapter(adapter);
+
+        daySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateDayView(daysOfWeek[position]);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
+    private void updateDayView(String selectedDay) {
+        selectedDayTitle.setText(selectedDay + " Schedule");
+        dayTimeSlotsContainer.removeAllViews();
+
+        for (String time : timeSlots) {
+            String timeSlotKey = selectedDay + " " + time;
+
+            LinearLayout timeSlotLayout = new LinearLayout(this);
+            timeSlotLayout.setOrientation(LinearLayout.HORIZONTAL);
+            timeSlotLayout.setPadding(16, 16, 16, 16);
+            timeSlotLayout.setBackgroundColor(Color.WHITE);
+
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            layoutParams.setMargins(0, 8, 0, 8);
+            timeSlotLayout.setLayoutParams(layoutParams);
+
+            // Time label
+            TextView timeLabel = new TextView(this);
+            timeLabel.setText(time);
+            timeLabel.setTextSize(18);
+//            timeLabel.setTextStyle(android.graphics.Typeface.BOLD);
+            timeLabel.setPadding(16, 16, 16, 16);
+            timeLabel.setTextColor(Color.parseColor("#B08BF2"));
+            LinearLayout.LayoutParams timeLabelParams = new LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1
+            );
+            timeLabel.setLayoutParams(timeLabelParams);
+
+            // Subject info container
+            LinearLayout subjectContainer = new LinearLayout(this);
+            subjectContainer.setOrientation(LinearLayout.VERTICAL);
+            subjectContainer.setPadding(16, 16, 16, 16);
+            subjectContainer.setBackgroundColor(Color.parseColor("#FFE6EF"));
+            LinearLayout.LayoutParams subjectContainerParams = new LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    3
+            );
+            subjectContainer.setLayoutParams(subjectContainerParams);
+
+            // Check if there's data for this time slot
+            if (scheduleData.containsKey(selectedDay) &&
+                    scheduleData.get(selectedDay).containsKey(time)) {
+
+                SubjectData data = scheduleData.get(selectedDay).get(time);
+
+                TextView subjectText = new TextView(this);
+                subjectText.setText(data.subject);
+                subjectText.setTextSize(16);
+//                subjectText.setTextStyle(android.graphics.Typeface.BOLD);
+
+                TextView typeText = new TextView(this);
+                typeText.setText("(" + data.type + ")");
+                typeText.setTextSize(14);
+
+                // Set colors based on type
+                int textColor = getColorForType(data.type);
+                subjectText.setTextColor(textColor);
+                typeText.setTextColor(textColor);
+
+                subjectContainer.addView(subjectText);
+                subjectContainer.addView(typeText);
+
+            } else {
+                TextView emptyText = new TextView(this);
+                emptyText.setText("No class");
+                emptyText.setTextSize(14);
+                emptyText.setTextColor(Color.GRAY);
+                emptyText.setGravity(Gravity.CENTER);
+                subjectContainer.addView(emptyText);
+            }
+
+            timeSlotLayout.addView(timeLabel);
+            timeSlotLayout.addView(subjectContainer);
+            dayTimeSlotsContainer.addView(timeSlotLayout);
+        }
+    }
+
+    private int getColorForType(String type) {
+        switch (type.toLowerCase()) {
+            case "course":
+            case "curs":
+                return Color.RED;
+            case "seminar":
+                return Color.BLUE;
+            case "lab":
+            case "laborator":
+                return Color.parseColor("#228B22");
+            default:
+                return Color.DKGRAY;
+        }
+    }
+
+    private void setupLogoutButton() {
         Button logoutButton = findViewById(R.id.button4);
         logoutButton.setOnClickListener(v -> {
             auth.signOut();
@@ -49,8 +219,9 @@ public class WeekScheduleActivity extends ComponentActivity {
             startActivity(new Intent(WeekScheduleActivity.this, MainActivity1.class));
             finish();
         });
+    }
 
-
+    private void initializeScheduleButtons() {
         addMon8 = findViewById(R.id.addMon8);
         addMon10 = findViewById(R.id.addMon10);
         addMon12 = findViewById(R.id.addMon12);
@@ -91,8 +262,10 @@ public class WeekScheduleActivity extends ComponentActivity {
         addFri18 = findViewById(R.id.addFri18);
         addFri20 = findViewById(R.id.addFri20);
 
+        setupButtonListeners();
+    }
 
-
+    private void setupButtonListeners() {
         addMon8.setOnClickListener(v -> showAddDialog(addMon8, "Monday 08:00"));
         addMon10.setOnClickListener(v -> showAddDialog(addMon10, "Monday 10:00"));
         addMon12.setOnClickListener(v -> showAddDialog(addMon12, "Monday 12:00"));
@@ -132,8 +305,6 @@ public class WeekScheduleActivity extends ComponentActivity {
         addFri16.setOnClickListener(v -> showAddDialog(addFri16, "Friday 16:00"));
         addFri18.setOnClickListener(v -> showAddDialog(addFri18, "Friday 18:00"));
         addFri20.setOnClickListener(v -> showAddDialog(addFri20, "Friday 20:00"));
-
-        loadScheduleFromFirebase();
     }
 
     private void showAddDialog(ImageButton buttonClicked, String timeSlot) {
@@ -162,7 +333,6 @@ public class WeekScheduleActivity extends ComponentActivity {
                 return;
             }
 
-
             Map<String, Object> subjectData = new HashMap<>();
             subjectData.put("time", timeSlot);
             subjectData.put("subject", subject);
@@ -174,6 +344,21 @@ public class WeekScheduleActivity extends ComponentActivity {
                     .addOnSuccessListener(documentReference -> {
                         Toast.makeText(this, "Saved to cloud", Toast.LENGTH_SHORT).show();
                         displaySubject(buttonClicked, subject, type);
+
+                        // Update local data structure
+                        String[] parts = timeSlot.split(" ");
+                        String day = parts[0];
+                        String time = parts[1];
+
+                        if (!scheduleData.containsKey(day)) {
+                            scheduleData.put(day, new HashMap<>());
+                        }
+                        scheduleData.get(day).put(time, new SubjectData(subject, type));
+
+                        // Update day view if it's currently visible
+                        if (daySwitch.isChecked()) {
+                            updateDayView((String) daySpinner.getSelectedItem());
+                        }
                     })
                     .addOnFailureListener(e ->
                             Toast.makeText(this, "Error saving: " + e.getMessage(), Toast.LENGTH_SHORT).show());
@@ -183,7 +368,6 @@ public class WeekScheduleActivity extends ComponentActivity {
         builder.show();
     }
 
-
     private void displaySubject(ImageButton buttonClicked, String subject, String type) {
         TextView subjectView = new TextView(this);
         subjectView.setText(subject + "\n(" + type + ")");
@@ -191,30 +375,13 @@ public class WeekScheduleActivity extends ComponentActivity {
         subjectView.setTextSize(13);
         subjectView.setPadding(15, 15, 15, 15);
         subjectView.setBackgroundColor(Color.parseColor("#FFE6EF"));
-
-        switch (type.toLowerCase()) {
-            case "course":
-            case "curs":
-                subjectView.setTextColor(Color.RED);
-                break;
-            case "seminar":
-                subjectView.setTextColor(Color.BLUE);
-                break;
-            case "lab":
-            case "laborator":
-                subjectView.setTextColor(Color.parseColor("#228B22"));
-                break;
-            default:
-                subjectView.setTextColor(Color.DKGRAY);
-                break;
-        }
+        subjectView.setTextColor(getColorForType(type));
 
         android.view.ViewGroup parent = (android.view.ViewGroup) buttonClicked.getParent();
         int index = parent.indexOfChild(buttonClicked);
         parent.removeView(buttonClicked);
         parent.addView(subjectView, index);
     }
-
 
     private void loadScheduleFromFirebase() {
         String userId = auth.getCurrentUser().getUid();
@@ -230,120 +397,77 @@ public class WeekScheduleActivity extends ComponentActivity {
 
                         if (time == null) continue;
 
-                        switch (time) {
-                            case "Monday 08:00":
-                                displaySubject(addMon8, subject, type);
-                                break;
-                            case "Tuesday 08:00":
-                                displaySubject(addTue8, subject, type);
-                                break;
-                            case "Wednesday 08:00":
-                                displaySubject(addWed8, subject, type);
-                                break;
-                            case "Thursday 08:00":
-                                displaySubject(addThu8, subject, type);
-                                break;
-                            case "Friday 08:00":
-                                displaySubject(addFri8, subject, type);
-                                break;
-                            case "Monday 10:00":
-                                displaySubject(addMon10, subject, type);
-                                break;
-                            case "Tuesday 10:00":
-                                displaySubject(addTue10, subject, type);
-                                break;
-                            case "Wednesday 10:00":
-                                displaySubject(addWed10, subject, type);
-                                break;
-                            case "Thursday 10:00":
-                                displaySubject(addThu10, subject, type);
-                                break;
-                            case "Friday 10:00":
-                                displaySubject(addFri10, subject, type);
-                                break;
+                        // Store data in local structure
+                        String[] parts = time.split(" ");
+                        if (parts.length >= 2) {
+                            String day = parts[0];
+                            String timeSlot = parts[1];
 
-                            case "Monday 12:00":
-                                displaySubject(addMon12, subject, type);
-                                break;
-                            case "Tuesday 12:00":
-                                displaySubject(addTue12, subject, type);
-                                break;
-                            case "Wednesday 12:00":
-                                displaySubject(addWed12, subject, type);
-                                break;
-                            case "Thursday 12:00":
-                                displaySubject(addThu12, subject, type);
-                                break;
-                            case "Friday 12:00":
-                                displaySubject(addFri12, subject, type);
-                                break;
+                            if (!scheduleData.containsKey(day)) {
+                                scheduleData.put(day, new HashMap<>());
+                            }
+                            scheduleData.get(day).put(timeSlot, new SubjectData(subject, type));
+                        }
 
-                            case "Monday 14:00":
-                                displaySubject(addMon14, subject, type);
-                                break;
-                            case "Tuesday 14:00":
-                                displaySubject(addTue14, subject, type);
-                                break;
-                            case "Wednesday 14:00":
-                                displaySubject(addWed14, subject, type);
-                                break;
-                            case "Thursday 14:00":
-                                displaySubject(addThu14, subject, type);
-                                break;
-                            case "Friday 14:00":
-                                displaySubject(addFri14, subject, type);
-                                break;
-                            case "Monday 16:00":
-                                displaySubject(addMon16, subject, type);
-                                break;
-                            case "Tuesday 16:00":
-                                displaySubject(addTue16, subject, type);
-                                break;
-                            case "Wednesday 16:00":
-                                displaySubject(addWed16, subject, type);
-                                break;
-                            case "Thursday 16:00":
-                                displaySubject(addThu16, subject, type);
-                                break;
-                            case "Friday 16:00":
-                                displaySubject(addFri16, subject, type);
-                                break;
-
-                            case "Monday 18:00":
-                                displaySubject(addMon18, subject, type);
-                                break;
-                            case "Tuesday 18:00":
-                                displaySubject(addTue18, subject, type);
-                                break;
-                            case "Wednesday 18:00":
-                                displaySubject(addWed18, subject, type);
-                                break;
-                            case "Thursday 18:00":
-                                displaySubject(addThu18, subject, type);
-                                break;
-                            case "Friday 18:00":
-                                displaySubject(addFri18, subject, type);
-                                break;
-                            case "Monday 20:00":
-                                displaySubject(addMon20, subject, type);
-                                break;
-                            case "Tuesday 20:00":
-                                displaySubject(addTue20, subject, type);
-                                break;
-                            case "Wednesday 20:00":
-                                displaySubject(addWed20, subject, type);
-                                break;
-                            case "Thursday 20:00":
-                                displaySubject(addThu20, subject, type);
-                                break;
-                            case "Friday 20:00":
-                                displaySubject(addFri20, subject, type);
-                                break;
-
+                        ImageButton button = getButtonForTimeSlot(time);
+                        if (button != null) {
+                            displaySubject(button, subject, type);
                         }
                     }
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed to load schedule: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private ImageButton getButtonForTimeSlot(String timeSlot) {
+        switch (timeSlot) {
+            case "Monday 08:00": return addMon8;
+            case "Tuesday 08:00": return addTue8;
+            case "Wednesday 08:00": return addWed8;
+            case "Thursday 08:00": return addThu8;
+            case "Friday 08:00": return addFri8;
+            case "Monday 10:00": return addMon10;
+            case "Tuesday 10:00": return addTue10;
+            case "Wednesday 10:00": return addWed10;
+            case "Thursday 10:00": return addThu10;
+            case "Friday 10:00": return addFri10;
+            case "Monday 12:00": return addMon12;
+            case "Tuesday 12:00": return addTue12;
+            case "Wednesday 12:00": return addWed12;
+            case "Thursday 12:00": return addThu12;
+            case "Friday 12:00": return addFri12;
+            case "Monday 14:00": return addMon14;
+            case "Tuesday 14:00": return addTue14;
+            case "Wednesday 14:00": return addWed14;
+            case "Thursday 14:00": return addThu14;
+            case "Friday 14:00": return addFri14;
+            case "Monday 16:00": return addMon16;
+            case "Tuesday 16:00": return addTue16;
+            case "Wednesday 16:00": return addWed16;
+            case "Thursday 16:00": return addThu16;
+            case "Friday 16:00": return addFri16;
+            case "Monday 18:00": return addMon18;
+            case "Tuesday 18:00": return addTue18;
+            case "Wednesday 18:00": return addWed18;
+            case "Thursday 18:00": return addThu18;
+            case "Friday 18:00": return addFri18;
+            case "Monday 20:00": return addMon20;
+            case "Tuesday 20:00": return addTue20;
+            case "Wednesday 20:00": return addWed20;
+            case "Thursday 20:00": return addThu20;
+            case "Friday 20:00": return addFri20;
+            default: return null;
+        }
+    }
+
+    // Helper class to store subject data
+    private static class SubjectData {
+        String subject;
+        String type;
+
+        SubjectData(String subject, String type) {
+            this.subject = subject;
+            this.type = type;
+        }
     }
 }

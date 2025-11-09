@@ -21,469 +21,529 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/button2"
+
+    <Switch
+        android:id="@+id/switch1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="96dp"
-        android:layout_marginEnd="160dp"
-        android:backgroundTint="#B08BF2"
-        android:text="Week"
-        android:textColor="@android:color/white"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="144dp"
+        android:text="Day"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TableLayout
-        android:id="@+id/scheduleTable"
-        android:layout_width="match_parent"
+    <!-- Day Selector Spinner (Initially Hidden) -->
+    <Spinner
+        android:id="@+id/daySpinner"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="184dp"
+        android:layout_marginStart="100dp"
+        android:layout_marginTop="144dp"
         android:background="#FFE6EF"
         android:padding="8dp"
-        android:stretchColumns="1,2,3,4,5"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="16dp">
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <TableRow android:background="#D8B4E2">
+    <!-- Week Schedule Table (Initially Visible) -->
+    <ScrollView
+        android:id="@+id/weekScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="184dp"
+        app:layout_constraintBottom_toTopOf="@+id/button4"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TableLayout
+            android:id="@+id/scheduleTable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFE6EF"
+            android:padding="8dp"
+            android:stretchColumns="1,2,3,4,5">
+
+            <TableRow android:background="#D8B4E2">
+
+                <TextView
+                    android:padding="10dp"
+                    android:text="Time"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:gravity="center"
+                    android:padding="15dp"
+                    android:text="Mon"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:gravity="center"
+                    android:padding="15dp"
+                    android:text="Tue"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:gravity="center"
+                    android:padding="12dp"
+                    android:text="Wed"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:gravity="center"
+                    android:padding="15dp"
+                    android:text="Thu"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:gravity="center"
+                    android:padding="12dp"
+                    android:text="Fri"
+                    android:textStyle="bold" />
+            </TableRow>
+
+
+            <TableRow>
+
+                <TextView
+                    android:padding="7dp"
+                    android:text="08:00" />
+
+                <ImageButton
+                    android:id="@+id/addMon8"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Monday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addTue8"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Tuesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addWed8"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Wednesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addThu8"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Thursday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addFri8"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Friday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    android:padding="7dp"
+                    android:text="10:00" />
+
+                <ImageButton
+                    android:id="@+id/addMon10"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Monday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addTue10"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Tuesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addWed10"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Wednesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addThu10"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Thursday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addFri10"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Friday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    android:padding="7dp"
+                    android:text="12:00" />
+
+                <ImageButton
+                    android:id="@+id/addMon12"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Monday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addTue12"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Tuesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addWed12"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Wednesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addThu12"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Thursday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addFri12"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Friday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    android:padding="7dp"
+                    android:text="14:00" />
+
+                <ImageButton
+                    android:id="@+id/addMon14"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Monday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addTue14"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Tuesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addWed14"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Wednesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addThu14"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Thursday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addFri14"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Friday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    android:padding="7dp"
+                    android:text="16:00" />
+
+                <ImageButton
+                    android:id="@+id/addMon16"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Monday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addTue16"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Tuesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addWed16"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Wednesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addThu16"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Thursday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addFri16"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Friday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    android:padding="7dp"
+                    android:text="18:00" />
+
+                <ImageButton
+                    android:id="@+id/addMon18"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Monday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addTue18"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Tuesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addWed18"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Wednesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addThu18"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Thursday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addFri18"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Friday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    android:padding="7dp"
+                    android:text="20:00" />
+
+                <ImageButton
+                    android:id="@+id/addMon20"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Monday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addTue20"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Tuesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addWed20"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Wednesday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addThu20"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Thursday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+
+                <ImageButton
+                    android:id="@+id/addFri20"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Add Friday 08:00"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:tint="#B08BF2" />
+            </TableRow>
+
+
+        </TableLayout>
+    </ScrollView>
+
+    <!-- Day Schedule View (Initially Hidden) -->
+    <ScrollView
+        android:id="@+id/dayScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="184dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/button4"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:id="@+id/dayScheduleContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFE6EF"
+            android:orientation="vertical"
+            android:padding="16dp">
 
             <TextView
-                android:padding="10dp"
-                android:text="Time"
-                android:textStyle="bold" />
-
-            <TextView
+                android:id="@+id/selectedDayTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#D8B4E2"
                 android:gravity="center"
-                android:padding="15dp"
-                android:text="Mon"
+                android:padding="16dp"
+                android:text="Monday Schedule"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:gravity="center"
-                android:padding="15dp"
-                android:text="Tue"
-                android:textStyle="bold" />
-
-            <TextView
-                android:gravity="center"
-                android:padding="12dp"
-                android:text="Wed"
-                android:textStyle="bold" />
-
-            <TextView
-                android:gravity="center"
-                android:padding="15dp"
-                android:text="Thu"
-                android:textStyle="bold" />
-
-            <TextView
-                android:gravity="center"
-                android:padding="12dp"
-                android:text="Fri"
-                android:textStyle="bold" />
-        </TableRow>
-
-
-        <TableRow>
-
-            <TextView
-                android:padding="7dp"
-                android:text="08:00" />
-
-            <ImageButton
-                android:id="@+id/addMon8"
-                android:layout_width="wrap_content"
+            <!-- Time slots will be added dynamically here -->
+            <LinearLayout
+                android:id="@+id/dayTimeSlots"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Monday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
+                android:orientation="vertical">
+                <!-- Dynamic content -->
+            </LinearLayout>
 
-            <ImageButton
-                android:id="@+id/addTue8"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Tuesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addWed8"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Wednesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addThu8"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Thursday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addFri8"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Friday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-        </TableRow>
-
-        <TableRow>
-
-            <TextView
-                android:padding="7dp"
-                android:text="10:00" />
-
-            <ImageButton
-                android:id="@+id/addMon10"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Monday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addTue10"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Tuesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addWed10"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Wednesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addThu10"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Thursday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addFri10"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Friday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-        </TableRow>
-
-        <TableRow>
-
-            <TextView
-                android:padding="7dp"
-                android:text="12:00" />
-
-            <ImageButton
-                android:id="@+id/addMon12"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Monday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addTue12"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Tuesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addWed12"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Wednesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addThu12"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Thursday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addFri12"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Friday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-        </TableRow>
-
-        <TableRow>
-
-            <TextView
-                android:padding="7dp"
-                android:text="14:00" />
-
-            <ImageButton
-                android:id="@+id/addMon14"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Monday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addTue14"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Tuesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addWed14"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Wednesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addThu14"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Thursday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addFri14"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Friday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-        </TableRow>
-
-        <TableRow>
-
-            <TextView
-                android:padding="7dp"
-                android:text="16:00" />
-
-            <ImageButton
-                android:id="@+id/addMon16"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Monday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addTue16"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Tuesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addWed16"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Wednesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addThu16"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Thursday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addFri16"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Friday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-        </TableRow>
-
-        <TableRow>
-
-            <TextView
-                android:padding="7dp"
-                android:text="18:00" />
-
-            <ImageButton
-                android:id="@+id/addMon18"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Monday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addTue18"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Tuesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addWed18"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Wednesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addThu18"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Thursday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addFri18"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Friday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-        </TableRow>
-
-        <TableRow>
-
-            <TextView
-                android:padding="7dp"
-                android:text="20:00" />
-
-            <ImageButton
-                android:id="@+id/addMon20"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Monday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addTue20"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Tuesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addWed20"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Wednesday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addThu20"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Thursday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-
-            <ImageButton
-                android:id="@+id/addFri20"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:contentDescription="Add Friday 08:00"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_input_add"
-                android:tint="#B08BF2" />
-        </TableRow>
-
-
-    </TableLayout>
+        </LinearLayout>
+    </ScrollView>
 
     <Button
         android:id="@+id/button4"
@@ -496,19 +556,5 @@
         android:textColor="@android:color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
-    <Switch
-        android:id="@+id/switch1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="144dp"
-        android:layout_marginEnd="325dp"
-        android:layout_marginBottom="560dp"
-        android:text="Day"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
