@@ -29,6 +29,16 @@
             android:theme="@style/Theme.StudentApp" />
 
         <activity
+            android:name=".SubjectDetailsActivity"
+            android:label="Subject Details"
+            android:exported="false"
+            android:parentActivityName=".WeekScheduleActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".WeekScheduleActivity" />
+        </activity>
+
+        <activity
             android:name=".WeekScheduleActivity"
             android:exported="false"
             android:label="Week Schedule"

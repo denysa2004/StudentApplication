@@ -76,6 +76,45 @@ public class WeekScheduleActivity extends ComponentActivity {
         daySpinner = findViewById(R.id.daySpinner);
         dayTimeSlotsContainer = findViewById(R.id.dayTimeSlots);
         selectedDayTitle = findViewById(R.id.selectedDayTitle);
+
+        // Setup search functionality
+        android.widget.SearchView searchView = findViewById(R.id.searchView);
+        searchView.setOnQueryTextListener(new android.widget.SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                searchSubject(query);
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+    }
+
+    private void searchSubject(String subjectName) {
+        String userId = auth.getCurrentUser().getUid();
+
+        db.collection("default")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("subject", subjectName)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        com.google.firebase.firestore.QueryDocumentSnapshot doc =
+                                (com.google.firebase.firestore.QueryDocumentSnapshot) queryDocumentSnapshots.getDocuments().get(0);
+                        String subject = doc.getString("subject");
+                        String type = doc.getString("type");
+                        String timeSlot = doc.getString("time");
+
+                        openSubjectDetails(subject, type, timeSlot);
+                    } else {
+                        Toast.makeText(this, "Subject not found", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Search error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
     private void setupDaySwitch() {
@@ -180,6 +219,15 @@ public class WeekScheduleActivity extends ComponentActivity {
 
                 subjectContainer.addView(subjectText);
                 subjectContainer.addView(typeText);
+
+                // Make clickable
+                subjectContainer.setClickable(true);
+                subjectContainer.setFocusable(true);
+                final String finalTimeSlot = timeSlotKey;
+                final String finalSubject = data.subject;
+                final String finalType = data.type;
+                subjectContainer.setOnClickListener(v ->
+                        openSubjectDetails(finalSubject, finalType, finalTimeSlot));
 
             } else {
                 TextView emptyText = new TextView(this);
@@ -376,11 +424,66 @@ public class WeekScheduleActivity extends ComponentActivity {
         subjectView.setPadding(15, 15, 15, 15);
         subjectView.setBackgroundColor(Color.parseColor("#FFE6EF"));
         subjectView.setTextColor(getColorForType(type));
+        subjectView.setClickable(true);
+
+        // Get the time slot for this button
+        String timeSlot = getTimeSlotForButton(buttonClicked);
+
+        // Set click listener to open details
+        subjectView.setOnClickListener(v -> openSubjectDetails(subject, type, timeSlot));
 
         android.view.ViewGroup parent = (android.view.ViewGroup) buttonClicked.getParent();
         int index = parent.indexOfChild(buttonClicked);
         parent.removeView(buttonClicked);
         parent.addView(subjectView, index);
+    }
+
+    private String getTimeSlotForButton(ImageButton button) {
+        int id = button.getId();
+        if (id == R.id.addMon8) return "Monday 08:00";
+        else if (id == R.id.addTue8) return "Tuesday 08:00";
+        else if (id == R.id.addWed8) return "Wednesday 08:00";
+        else if (id == R.id.addThu8) return "Thursday 08:00";
+        else if (id == R.id.addFri8) return "Friday 08:00";
+        else if (id == R.id.addMon10) return "Monday 10:00";
+        else if (id == R.id.addTue10) return "Tuesday 10:00";
+        else if (id == R.id.addWed10) return "Wednesday 10:00";
+        else if (id == R.id.addThu10) return "Thursday 10:00";
+        else if (id == R.id.addFri10) return "Friday 10:00";
+        else if (id == R.id.addMon12) return "Monday 12:00";
+        else if (id == R.id.addTue12) return "Tuesday 12:00";
+        else if (id == R.id.addWed12) return "Wednesday 12:00";
+        else if (id == R.id.addThu12) return "Thursday 12:00";
+        else if (id == R.id.addFri12) return "Friday 12:00";
+        else if (id == R.id.addMon14) return "Monday 14:00";
+        else if (id == R.id.addTue14) return "Tuesday 14:00";
+        else if (id == R.id.addWed14) return "Wednesday 14:00";
+        else if (id == R.id.addThu14) return "Thursday 14:00";
+        else if (id == R.id.addFri14) return "Friday 14:00";
+        else if (id == R.id.addMon16) return "Monday 16:00";
+        else if (id == R.id.addTue16) return "Tuesday 16:00";
+        else if (id == R.id.addWed16) return "Wednesday 16:00";
+        else if (id == R.id.addThu16) return "Thursday 16:00";
+        else if (id == R.id.addFri16) return "Friday 16:00";
+        else if (id == R.id.addMon18) return "Monday 18:00";
+        else if (id == R.id.addTue18) return "Tuesday 18:00";
+        else if (id == R.id.addWed18) return "Wednesday 18:00";
+        else if (id == R.id.addThu18) return "Thursday 18:00";
+        else if (id == R.id.addFri18) return "Friday 18:00";
+        else if (id == R.id.addMon20) return "Monday 20:00";
+        else if (id == R.id.addTue20) return "Tuesday 20:00";
+        else if (id == R.id.addWed20) return "Wednesday 20:00";
+        else if (id == R.id.addThu20) return "Thursday 20:00";
+        else if (id == R.id.addFri20) return "Friday 20:00";
+        return "";
+    }
+
+    private void openSubjectDetails(String subject, String type, String timeSlot) {
+        Intent intent = new Intent(WeekScheduleActivity.this, SubjectDetailsActivity.class);
+        intent.putExtra("subjectName", subject);
+        intent.putExtra("subjectType", type);
+        intent.putExtra("timeSlot", timeSlot);
+        startActivity(intent);
     }
 
     private void loadScheduleFromFirebase() {
