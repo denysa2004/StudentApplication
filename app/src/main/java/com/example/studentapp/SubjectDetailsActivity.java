@@ -350,8 +350,17 @@ public class SubjectDetailsActivity extends ComponentActivity {
 
         Button deleteButton = new Button(this);
         deleteButton.setText("Delete");
-        deleteButton.setBackgroundColor(Color.parseColor("#FF6B6B"));
-        deleteButton.setTextColor(Color.WHITE);
+        deleteButton.setTextSize(12);
+        deleteButton.setPadding(2, 2, 2, 2);
+        GradientDrawable border = new GradientDrawable();
+        border.setShape(GradientDrawable.RECTANGLE);
+        border.setStroke(2, Color.RED);
+        border.setCornerRadius(16);
+        border.setColor(Color.WHITE);
+
+        deleteButton.setBackground(border);
+        deleteButton.setTextColor(Color.RED);
+
         deleteButton.setOnClickListener(v -> {
             gradesList.removeView(gradeItem);
             deleteGradeFromFirebase(name);
@@ -403,8 +412,16 @@ public class SubjectDetailsActivity extends ComponentActivity {
 
         Button deleteButton = new Button(this);
         deleteButton.setText("Delete");
-        deleteButton.setBackgroundColor(Color.parseColor("#FF6B6B"));
-        deleteButton.setTextColor(Color.WHITE);
+        deleteButton.setTextSize(12);
+        deleteButton.setPadding(2, 2, 2, 2);
+        GradientDrawable border = new GradientDrawable();
+        border.setShape(GradientDrawable.RECTANGLE);
+        border.setStroke(2, Color.RED);
+        border.setCornerRadius(16);
+        border.setColor(Color.WHITE);
+
+        deleteButton.setBackground(border);
+        deleteButton.setTextColor(Color.RED);
         deleteButton.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
