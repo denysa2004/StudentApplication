@@ -6,10 +6,12 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -18,11 +20,15 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+
 import androidx.activity.ComponentActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,7 +40,8 @@ public class WeekScheduleActivity extends ComponentActivity {
     private FirebaseAuth auth;
     private FirebaseFirestore db;
 
-    private ScrollView weekScrollView, dayScrollView;
+    private HorizontalScrollView weekScrollView;
+    private ScrollView dayScrollView;
     private Switch daySwitch;
     private Spinner daySpinner;
     private LinearLayout dayTimeSlotsContainer;
@@ -92,7 +99,7 @@ public class WeekScheduleActivity extends ComponentActivity {
             }
         });
     }
-
+     //search the subject
     private void searchSubject(String subjectName) {
         String userId = auth.getCurrentUser().getUid();
 
@@ -101,22 +108,49 @@ public class WeekScheduleActivity extends ComponentActivity {
                 .whereEqualTo("subject", subjectName)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (!queryDocumentSnapshots.isEmpty()) {
-                        com.google.firebase.firestore.QueryDocumentSnapshot doc =
-                                (com.google.firebase.firestore.QueryDocumentSnapshot) queryDocumentSnapshots.getDocuments().get(0);
-                        String subject = doc.getString("subject");
-                        String type = doc.getString("type");
-                        String timeSlot = doc.getString("time");
+            if (!queryDocumentSnapshots.isEmpty()) {
 
-                        openSubjectDetails(subject, type, timeSlot);
-                    } else {
-                        Toast.makeText(this, "Subject not found", Toast.LENGTH_SHORT).show();
-                    }
-                })
+                List<DocumentSnapshot> docs = queryDocumentSnapshots.getDocuments();
+                List<String> options = new ArrayList<>();
+
+                for (DocumentSnapshot d : docs) {
+                    String subject = d.getString("subject");
+                    String type = d.getString("type");
+                    String time = d.getString("time");
+
+                    options.add(subject + " - " + type + " (" + time + ")");
+                }
+
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Choose ");
+
+                builder.setItems(options.toArray(new String[0]), (dialog, which) -> {
+                    DocumentSnapshot chosen = docs.get(which);
+
+                    openSubjectDetails(
+                            chosen.getString("subject"),
+                            chosen.getString("type"),
+                            chosen.getString("time")
+                    );
+                });
+
+                builder.show();
+
+            } else {
+                Toast.makeText(this, "Subject not found", Toast.LENGTH_SHORT).show();
+            }
+        })
+
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Search error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
+
+
+
+
+    //change from day ->week
     private void setupDaySwitch() {
         daySwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
@@ -175,7 +209,6 @@ public class WeekScheduleActivity extends ComponentActivity {
             TextView timeLabel = new TextView(this);
             timeLabel.setText(time);
             timeLabel.setTextSize(18);
-//            timeLabel.setTextStyle(android.graphics.Typeface.BOLD);
             timeLabel.setPadding(16, 16, 16, 16);
             timeLabel.setTextColor(Color.parseColor("#B08BF2"));
             LinearLayout.LayoutParams timeLabelParams = new LinearLayout.LayoutParams(
@@ -197,7 +230,7 @@ public class WeekScheduleActivity extends ComponentActivity {
             );
             subjectContainer.setLayoutParams(subjectContainerParams);
 
-            // Check if there's data for this time slot
+
             if (scheduleData.containsKey(selectedDay) &&
                     scheduleData.get(selectedDay).containsKey(time)) {
 
@@ -206,13 +239,11 @@ public class WeekScheduleActivity extends ComponentActivity {
                 TextView subjectText = new TextView(this);
                 subjectText.setText(data.subject);
                 subjectText.setTextSize(16);
-//                subjectText.setTextStyle(android.graphics.Typeface.BOLD);
 
                 TextView typeText = new TextView(this);
                 typeText.setText("(" + data.type + ")");
                 typeText.setTextSize(14);
 
-                // Set colors based on type
                 int textColor = getColorForType(data.type);
                 subjectText.setTextColor(textColor);
                 typeText.setTextColor(textColor);
@@ -220,29 +251,36 @@ public class WeekScheduleActivity extends ComponentActivity {
                 subjectContainer.addView(subjectText);
                 subjectContainer.addView(typeText);
 
-                // Make clickable
-                subjectContainer.setClickable(true);
-                subjectContainer.setFocusable(true);
-                final String finalTimeSlot = timeSlotKey;
-                final String finalSubject = data.subject;
-                final String finalType = data.type;
+
+                String finalTimeSlot = timeSlotKey;
                 subjectContainer.setOnClickListener(v ->
-                        openSubjectDetails(finalSubject, finalType, finalTimeSlot));
+                        openSubjectDetails(data.subject, data.type, finalTimeSlot)
+                );
 
             } else {
-                TextView emptyText = new TextView(this);
-                emptyText.setText("No class");
-                emptyText.setTextSize(14);
-                emptyText.setTextColor(Color.GRAY);
-                emptyText.setGravity(Gravity.CENTER);
-                subjectContainer.addView(emptyText);
-            }
+
+                ImageButton clone = new ImageButton(this);
+                clone.setImageResource(android.R.drawable.ic_input_add);
+                clone.setBackgroundColor(Color.TRANSPARENT);
+                clone.setPadding(8, 8, 8, 8);
+                clone.setColorFilter(Color.parseColor("#B08BF2"));
+
+                String finalTimeSlot = selectedDay + " " + time;
+
+
+                clone.setOnClickListener(v -> showAddDialog(clone, finalTimeSlot));
+
+
+                subjectContainer.addView(clone);
+                }
+
 
             timeSlotLayout.addView(timeLabel);
             timeSlotLayout.addView(subjectContainer);
             dayTimeSlotsContainer.addView(timeSlotLayout);
         }
     }
+
 
     private int getColorForType(String type) {
         switch (type.toLowerCase()) {
@@ -258,7 +296,7 @@ public class WeekScheduleActivity extends ComponentActivity {
                 return Color.DKGRAY;
         }
     }
-
+   //log out
     private void setupLogoutButton() {
         Button logoutButton = findViewById(R.id.button4);
         logoutButton.setOnClickListener(v -> {
