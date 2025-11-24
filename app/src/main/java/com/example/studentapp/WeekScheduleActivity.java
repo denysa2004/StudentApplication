@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -20,15 +19,12 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-
-
 import androidx.activity.ComponentActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,6 +72,12 @@ public class WeekScheduleActivity extends ComponentActivity {
         loadScheduleFromFirebase();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh data when returning from subject details
+    }
+
     private void initializeViews() {
         weekScrollView = findViewById(R.id.weekScrollView);
         dayScrollView = findViewById(R.id.dayScrollView);
@@ -99,7 +101,8 @@ public class WeekScheduleActivity extends ComponentActivity {
             }
         });
     }
-     //search the subject
+
+    // Search the subject - shows dialog if multiple results
     private void searchSubject(String subjectName) {
         String userId = auth.getCurrentUser().getUid();
 
@@ -108,49 +111,58 @@ public class WeekScheduleActivity extends ComponentActivity {
                 .whereEqualTo("subject", subjectName)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-            if (!queryDocumentSnapshots.isEmpty()) {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        List<DocumentSnapshot> docs = queryDocumentSnapshots.getDocuments();
 
-                List<DocumentSnapshot> docs = queryDocumentSnapshots.getDocuments();
-                List<String> options = new ArrayList<>();
+                        if (docs.size() == 1) {
+                            // Only one result, open directly
+                            DocumentSnapshot doc = docs.get(0);
+                            openSubjectDetails(
+                                    doc.getString("subject"),
+                                    doc.getString("type"),
+                                    doc.getString("time")
+                            );
+                        } else {
+                            // Multiple results, show dialog to choose
+                            List<String> options = new ArrayList<>();
+                            for (DocumentSnapshot d : docs) {
+                                String subject = d.getString("subject");
+                                String type = d.getString("type");
+                                String time = d.getString("time");
 
-                for (DocumentSnapshot d : docs) {
-                    String subject = d.getString("subject");
-                    String type = d.getString("type");
-                    String time = d.getString("time");
+                                String displayText = subject + " - " + type;
+                                if (time != null && !time.isEmpty()) {
+                                    displayText += " (" + time + ")";
+                                } else {
+                                    displayText += " (Not scheduled)";
+                                }
+                                options.add(displayText);
+                            }
 
-                    options.add(subject + " - " + type + " (" + time + ")");
-                }
+                            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                            builder.setTitle("Choose Subject");
 
+                            builder.setItems(options.toArray(new String[0]), (dialog, which) -> {
+                                DocumentSnapshot chosen = docs.get(which);
+                                openSubjectDetails(
+                                        chosen.getString("subject"),
+                                        chosen.getString("type"),
+                                        chosen.getString("time")
+                                );
+                            });
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Choose ");
-
-                builder.setItems(options.toArray(new String[0]), (dialog, which) -> {
-                    DocumentSnapshot chosen = docs.get(which);
-
-                    openSubjectDetails(
-                            chosen.getString("subject"),
-                            chosen.getString("type"),
-                            chosen.getString("time")
-                    );
-                });
-
-                builder.show();
-
-            } else {
-                Toast.makeText(this, "Subject not found", Toast.LENGTH_SHORT).show();
-            }
-        })
-
+                            builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+                            builder.show();
+                        }
+                    } else {
+                        Toast.makeText(this, "Subject not found", Toast.LENGTH_SHORT).show();
+                    }
+                })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Search error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
-
-
-
-
-    //change from day ->week
+    // Change from day -> week
     private void setupDaySwitch() {
         daySwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
@@ -230,7 +242,6 @@ public class WeekScheduleActivity extends ComponentActivity {
             );
             subjectContainer.setLayoutParams(subjectContainerParams);
 
-
             if (scheduleData.containsKey(selectedDay) &&
                     scheduleData.get(selectedDay).containsKey(time)) {
 
@@ -251,14 +262,20 @@ public class WeekScheduleActivity extends ComponentActivity {
                 subjectContainer.addView(subjectText);
                 subjectContainer.addView(typeText);
 
+                // Make clickable - show options dialog
+                subjectContainer.setClickable(true);
+                subjectContainer.setFocusable(true);
+                final String finalTimeSlot = timeSlotKey;
+                final String finalSubject = data.subject;
+                final String finalType = data.type;
 
-                String finalTimeSlot = timeSlotKey;
+                ImageButton correspondingButton = getButtonForTimeSlot(finalTimeSlot);
+
                 subjectContainer.setOnClickListener(v ->
-                        openSubjectDetails(data.subject, data.type, finalTimeSlot)
-                );
+                        showSubjectOptionsDialogDayView(finalSubject, finalType, finalTimeSlot, correspondingButton));
 
             } else {
-
+                // Add button for empty slot
                 ImageButton clone = new ImageButton(this);
                 clone.setImageResource(android.R.drawable.ic_input_add);
                 clone.setBackgroundColor(Color.TRANSPARENT);
@@ -266,21 +283,16 @@ public class WeekScheduleActivity extends ComponentActivity {
                 clone.setColorFilter(Color.parseColor("#B08BF2"));
 
                 String finalTimeSlot = selectedDay + " " + time;
-
-
                 clone.setOnClickListener(v -> showAddDialog(clone, finalTimeSlot));
 
-
                 subjectContainer.addView(clone);
-                }
-
+            }
 
             timeSlotLayout.addView(timeLabel);
             timeSlotLayout.addView(subjectContainer);
             dayTimeSlotsContainer.addView(timeSlotLayout);
         }
     }
-
 
     private int getColorForType(String type) {
         switch (type.toLowerCase()) {
@@ -296,7 +308,8 @@ public class WeekScheduleActivity extends ComponentActivity {
                 return Color.DKGRAY;
         }
     }
-   //log out
+
+    // Log out
     private void setupLogoutButton() {
         Button logoutButton = findViewById(R.id.button4);
         logoutButton.setOnClickListener(v -> {
@@ -467,13 +480,444 @@ public class WeekScheduleActivity extends ComponentActivity {
         // Get the time slot for this button
         String timeSlot = getTimeSlotForButton(buttonClicked);
 
-        // Set click listener to open details
-        subjectView.setOnClickListener(v -> openSubjectDetails(subject, type, timeSlot));
+        // Set click listener to show options menu
+        subjectView.setOnClickListener(v -> showSubjectOptionsDialog(subject, type, timeSlot, buttonClicked));
 
         android.view.ViewGroup parent = (android.view.ViewGroup) buttonClicked.getParent();
         int index = parent.indexOfChild(buttonClicked);
         parent.removeView(buttonClicked);
         parent.addView(subjectView, index);
+    }
+
+    private void showSubjectOptionsDialog(String subject, String type, String timeSlot, ImageButton originalButton) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        // Create custom title view
+        TextView titleView = new TextView(this);
+        titleView.setText(subject);
+        titleView.setPadding(60, 40, 60, 40);
+        titleView.setTextSize(20);
+        titleView.setTextColor(Color.parseColor("#B08BF2"));
+        titleView.setBackgroundColor(Color.parseColor("#FFE6EF"));
+        builder.setCustomTitle(titleView);
+
+        String[] options = {"See Details", "Delete Subject"};
+
+        builder.setItems(options, (dialog, which) -> {
+            if (which == 0) {
+                // See Details
+                openSubjectDetails(subject, type, timeSlot);
+            } else if (which == 1) {
+                // Delete from Time Slot
+                confirmDeleteFromTimeSlot(subject, type, timeSlot, originalButton);
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Style the cancel button
+        Button cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+        if (cancelButton != null) {
+            cancelButton.setTextColor(Color.parseColor("#B08BF2"));
+        }
+    }
+
+    private void confirmDeleteFromTimeSlot(String subject, String type, String timeSlot, ImageButton originalButton) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        // Create custom title view
+        TextView titleView = new TextView(this);
+        titleView.setText("Delete from Time Slot");
+        titleView.setPadding(60, 40, 60, 40);
+        titleView.setTextSize(18);
+        titleView.setTextColor(Color.parseColor("#B08BF2"));
+        titleView.setBackgroundColor(Color.parseColor("#FFE6EF"));
+        builder.setCustomTitle(titleView);
+
+        // Create custom message view
+        TextView messageView = new TextView(this);
+        messageView.setText("Remove " + subject + " from " + timeSlot + "?\n\nThe subject details will be kept in the database.");
+        messageView.setPadding(60, 40, 60, 40);
+        messageView.setTextSize(16);
+        messageView.setTextColor(Color.BLACK);
+        builder.setView(messageView);
+
+        builder.setPositiveButton("Delete", (dialog, which) -> {
+            deleteSubjectFromTimeSlot(subject, timeSlot, originalButton);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Style the buttons
+        Button deleteButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        Button cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+
+        if (deleteButton != null) {
+            deleteButton.setTextColor(Color.parseColor("#FF6B6B"));
+        }
+        if (cancelButton != null) {
+            cancelButton.setTextColor(Color.parseColor("#B08BF2"));
+        }
+    }
+
+    private void showSubjectOptionsDialogDayView(String subject, String type, String timeSlot, ImageButton correspondingButton) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        // Create custom title view
+        TextView titleView = new TextView(this);
+        titleView.setText(subject);
+        titleView.setPadding(60, 40, 60, 40);
+        titleView.setTextSize(20);
+        titleView.setTextColor(Color.parseColor("#B08BF2"));
+        titleView.setBackgroundColor(Color.parseColor("#FFE6EF"));
+        builder.setCustomTitle(titleView);
+
+        String[] options = {"See Details", "Delete from Time Slot"};
+
+        builder.setItems(options, (dialog, which) -> {
+            if (which == 0) {
+                // See Details
+                openSubjectDetails(subject, type, timeSlot);
+            } else if (which == 1) {
+                // Delete from Time Slot
+                confirmDeleteFromTimeSlotDayView(subject, type, timeSlot, correspondingButton);
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Style the cancel button
+        Button cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+        if (cancelButton != null) {
+            cancelButton.setTextColor(Color.parseColor("#B08BF2"));
+        }
+    }
+
+    private void confirmDeleteFromTimeSlotDayView(String subject, String type, String timeSlot, ImageButton correspondingButton) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        // Create custom title view
+        TextView titleView = new TextView(this);
+        titleView.setText("Delete from Time Slot");
+        titleView.setPadding(60, 40, 60, 40);
+        titleView.setTextSize(18);
+        titleView.setTextColor(Color.parseColor("#B08BF2"));
+        titleView.setBackgroundColor(Color.parseColor("#FFE6EF"));
+        builder.setCustomTitle(titleView);
+
+        // Create custom message view
+        TextView messageView = new TextView(this);
+        messageView.setText("Remove " + subject + " from " + timeSlot + "?\n\nThe subject details will be kept in the database.");
+        messageView.setPadding(60, 40, 60, 40);
+        messageView.setTextSize(16);
+        messageView.setTextColor(Color.BLACK);
+        builder.setView(messageView);
+
+        builder.setPositiveButton("Delete", (dialog, which) -> {
+            deleteSubjectFromTimeSlotDayView(subject, timeSlot, correspondingButton);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Style the buttons
+        Button deleteButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        Button cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+
+        if (deleteButton != null) {
+            deleteButton.setTextColor(Color.parseColor("#FF6B6B"));
+        }
+        if (cancelButton != null) {
+            cancelButton.setTextColor(Color.parseColor("#B08BF2"));
+        }
+    }
+
+    private void deleteSubjectFromTimeSlot(String subject, String timeSlot, ImageButton originalButton) {
+        String userId = auth.getCurrentUser().getUid();
+
+        db.collection("default")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("time", timeSlot)
+                .whereEqualTo("subject", subject)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        String documentId = queryDocumentSnapshots.getDocuments().get(0).getId();
+
+                        // DELETE the entire document from Firebase
+                        db.collection("default")
+                                .document(documentId)
+                                .delete()
+                                .addOnSuccessListener(aVoid -> {
+                                    runOnUiThread(() -> {
+                                        try {
+                                            Toast.makeText(this, "Deleted from database", Toast.LENGTH_SHORT).show();
+
+                                            // Remove from local data structure
+                                            String[] parts = timeSlot.split(" ");
+                                            if (parts.length >= 2) {
+                                                String day = parts[0];
+                                                String time = parts[1];
+                                                if (scheduleData.containsKey(day)) {
+                                                    scheduleData.get(day).remove(time);
+                                                }
+                                            }
+
+                                            // Recreate the schedule view
+                                            recreateScheduleView();
+                                        } catch (Exception e) {
+                                            Toast.makeText(this, "Error updating UI: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                            e.printStackTrace();
+                                        }
+                                    });
+                                })
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this, "Error deleting: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Error finding subject: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private void deleteSubjectFromTimeSlotDayView(String subject, String timeSlot, ImageButton correspondingButton) {
+        String userId = auth.getCurrentUser().getUid();
+
+        db.collection("default")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("time", timeSlot)
+                .whereEqualTo("subject", subject)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        String documentId = queryDocumentSnapshots.getDocuments().get(0).getId();
+
+                        // DELETE the entire document from Firebase
+                        db.collection("default")
+                                .document(documentId)
+                                .delete()
+                                .addOnSuccessListener(aVoid -> {
+                                    runOnUiThread(() -> {
+                                        try {
+                                            Toast.makeText(this, "Deleted from database", Toast.LENGTH_SHORT).show();
+
+                                            // Remove from local data structure
+                                            String[] parts = timeSlot.split(" ");
+                                            if (parts.length >= 2) {
+                                                String day = parts[0];
+                                                String time = parts[1];
+                                                if (scheduleData.containsKey(day)) {
+                                                    scheduleData.get(day).remove(time);
+                                                }
+                                            }
+
+                                            // Recreate the schedule view
+                                            recreateScheduleView();
+                                        } catch (Exception e) {
+                                            Toast.makeText(this, "Error updating UI: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                            e.printStackTrace();
+                                        }
+                                    });
+                                })
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this, "Error deleting: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Error finding subject: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private void recreateScheduleView() {
+        try {
+            // Save current state
+            boolean isDayViewActive = daySwitch.isChecked();
+            String selectedDay = isDayViewActive ? (String) daySpinner.getSelectedItem() : null;
+
+            // Clear schedule data
+            scheduleData.clear();
+
+            // IMPORTANT: Reset the table by removing all TextViews and restoring ImageButtons
+            resetTableToInitialState();
+
+            // Reload data from Firebase
+            String userId = auth.getCurrentUser().getUid();
+            db.collection("default")
+                    .whereEqualTo("userId", userId)
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        runOnUiThread(() -> {
+                            try {
+                                for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                                    String time = doc.getString("time");
+                                    String subject = doc.getString("subject");
+                                    String type = doc.getString("type");
+
+                                    // Only load subjects that have a time slot assigned
+                                    if (time == null || time.isEmpty()) continue;
+
+                                    // Store data in local structure
+                                    String[] parts = time.split(" ");
+                                    if (parts.length >= 2) {
+                                        String day = parts[0];
+                                        String timeSlot = parts[1];
+
+                                        if (!scheduleData.containsKey(day)) {
+                                            scheduleData.put(day, new HashMap<>());
+                                        }
+                                        scheduleData.get(day).put(timeSlot, new SubjectData(subject, type));
+                                    }
+
+                                    ImageButton button = getButtonForTimeSlot(time);
+                                    if (button != null) {
+                                        displaySubject(button, subject, type);
+                                    }
+                                }
+
+                                // Restore view state
+                                if (isDayViewActive && selectedDay != null) {
+                                    new android.os.Handler().postDelayed(() -> {
+                                        updateDayView(selectedDay);
+                                    }, 200);
+                                }
+                            } catch (Exception e) {
+                                Toast.makeText(this, "Error refreshing view: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                e.printStackTrace();
+                            }
+                        });
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Error loading data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        e.printStackTrace();
+                    });
+        } catch (Exception e) {
+            Toast.makeText(this, "Error recreating view: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+    }
+
+    private void resetTableToInitialState() {
+        // Get the table layout
+        android.widget.TableLayout scheduleTable = findViewById(R.id.scheduleTable);
+        if (scheduleTable == null) return;
+
+        // Iterate through all rows (skip header at index 0)
+        for (int rowIndex = 1; rowIndex < scheduleTable.getChildCount(); rowIndex++) {
+            View row = scheduleTable.getChildAt(rowIndex);
+
+            if (row instanceof android.widget.TableRow) {
+                android.widget.TableRow tableRow = (android.widget.TableRow) row;
+
+                // Iterate through cells (skip time label at index 0)
+                for (int cellIndex = 1; cellIndex < tableRow.getChildCount(); cellIndex++) {
+                    View cell = tableRow.getChildAt(cellIndex);
+
+                    // If it's a TextView (subject), remove it and add back the ImageButton
+                    if (cell instanceof TextView) {
+                        TextView tv = (TextView) cell;
+                        String text = tv.getText().toString();
+
+                        // Check if this is a subject (contains parentheses)
+                        if (text.contains("(") && text.contains(")")) {
+                            // Remove the TextView
+                            tableRow.removeViewAt(cellIndex);
+
+                            // Create and add a fresh ImageButton
+                            ImageButton newButton = createButtonForPosition(rowIndex - 1, cellIndex - 1);
+                            if (newButton != null) {
+                                tableRow.addView(newButton, cellIndex);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Reinitialize button references
+        initializeScheduleButtons();
+    }
+
+    private ImageButton createButtonForPosition(int timeIndex, int dayIndex) {
+        String[] times = {"08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"};
+        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
+
+        if (timeIndex >= times.length || dayIndex >= days.length) {
+            return null;
+        }
+
+        String timeSlot = days[dayIndex] + " " + times[timeIndex];
+
+        ImageButton button = new ImageButton(this);
+        button.setLayoutParams(new android.widget.TableRow.LayoutParams(
+                android.widget.TableRow.LayoutParams.WRAP_CONTENT,
+                android.widget.TableRow.LayoutParams.WRAP_CONTENT
+        ));
+        button.setBackgroundColor(Color.TRANSPARENT);
+        button.setImageResource(android.R.drawable.ic_input_add);
+        button.setColorFilter(Color.parseColor("#B08BF2"));
+        button.setPadding(8, 8, 8, 8);
+        button.setContentDescription("Add " + timeSlot);
+
+        // Set the appropriate ID
+        int buttonId = getButtonIdForTimeSlot(timeSlot);
+        if (buttonId != 0) {
+            button.setId(buttonId);
+        }
+
+        // Set click listener
+        button.setOnClickListener(v -> showAddDialog(button, timeSlot));
+
+        return button;
+    }
+
+    private int getButtonIdForTimeSlot(String timeSlot) {
+        switch (timeSlot) {
+            case "Monday 08:00": return R.id.addMon8;
+            case "Tuesday 08:00": return R.id.addTue8;
+            case "Wednesday 08:00": return R.id.addWed8;
+            case "Thursday 08:00": return R.id.addThu8;
+            case "Friday 08:00": return R.id.addFri8;
+            case "Monday 10:00": return R.id.addMon10;
+            case "Tuesday 10:00": return R.id.addTue10;
+            case "Wednesday 10:00": return R.id.addWed10;
+            case "Thursday 10:00": return R.id.addThu10;
+            case "Friday 10:00": return R.id.addFri10;
+            case "Monday 12:00": return R.id.addMon12;
+            case "Tuesday 12:00": return R.id.addTue12;
+            case "Wednesday 12:00": return R.id.addWed12;
+            case "Thursday 12:00": return R.id.addThu12;
+            case "Friday 12:00": return R.id.addFri12;
+            case "Monday 14:00": return R.id.addMon14;
+            case "Tuesday 14:00": return R.id.addTue14;
+            case "Wednesday 14:00": return R.id.addWed14;
+            case "Thursday 14:00": return R.id.addThu14;
+            case "Friday 14:00": return R.id.addFri14;
+            case "Monday 16:00": return R.id.addMon16;
+            case "Tuesday 16:00": return R.id.addTue16;
+            case "Wednesday 16:00": return R.id.addWed16;
+            case "Thursday 16:00": return R.id.addThu16;
+            case "Friday 16:00": return R.id.addFri16;
+            case "Monday 18:00": return R.id.addMon18;
+            case "Tuesday 18:00": return R.id.addTue18;
+            case "Wednesday 18:00": return R.id.addWed18;
+            case "Thursday 18:00": return R.id.addThu18;
+            case "Friday 18:00": return R.id.addFri18;
+            case "Monday 20:00": return R.id.addMon20;
+            case "Tuesday 20:00": return R.id.addTue20;
+            case "Wednesday 20:00": return R.id.addWed20;
+            case "Thursday 20:00": return R.id.addThu20;
+            case "Friday 20:00": return R.id.addFri20;
+            default: return 0;
+        }
     }
 
     private String getTimeSlotForButton(ImageButton button) {
@@ -536,7 +980,8 @@ public class WeekScheduleActivity extends ComponentActivity {
                         String subject = doc.getString("subject");
                         String type = doc.getString("type");
 
-                        if (time == null) continue;
+                        // Only load subjects that have a time slot assigned
+                        if (time == null || time.isEmpty()) continue;
 
                         // Store data in local structure
                         String[] parts = time.split(" ");
