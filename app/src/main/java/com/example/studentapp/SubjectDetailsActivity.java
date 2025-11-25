@@ -3,10 +3,13 @@ package com.example.studentapp;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
-import android.view.Gravity;
+import android.provider.OpenableColumns;
+import android.util.Base64;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,11 +18,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.ComponentActivity;
+import androidx.core.content.FileProvider;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -39,10 +46,12 @@ public class SubjectDetailsActivity extends ComponentActivity {
     private TextView subjectTitle, subjectTypeText;
     private TextView professorName, locationText, examDateText, finalGradeText;
     private TextView attendanceCount;
-    private LinearLayout attendanceDotsContainer, gradesList, notesList;
+    private LinearLayout attendanceDotsContainer, gradesList, notesList, pdfList;
 
     private int totalClasses = 0;
     private int attendedClasses = 0;
+
+    private static final int PDF_REQUEST_CODE = 101;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,11 +82,11 @@ public class SubjectDetailsActivity extends ComponentActivity {
         attendanceDotsContainer = findViewById(R.id.attendanceDotsContainer);
         gradesList = findViewById(R.id.gradesList);
         notesList = findViewById(R.id.notesList);
+        pdfList = findViewById(R.id.pdfList);
 
         subjectTitle.setText(subjectName);
         subjectTypeText.setText(subjectType);
 
-        // Set color based on type
         int color = getColorForType(subjectType);
         subjectTypeText.setTextColor(color);
     }
@@ -108,6 +117,10 @@ public class SubjectDetailsActivity extends ComponentActivity {
 
         Button addNoteButton = findViewById(R.id.addNoteButton);
         addNoteButton.setOnClickListener(v -> showAddNoteDialog());
+
+
+        Button addPdfButton = findViewById(R.id.addPdfButton);
+        addPdfButton.setOnClickListener(v -> pickPdfFile());
     }
 
     private void loadSubjectDetails() {
@@ -123,7 +136,6 @@ public class SubjectDetailsActivity extends ComponentActivity {
                         DocumentSnapshot document = queryDocumentSnapshots.getDocuments().get(0);
                         documentId = document.getId();
 
-                        // Load all details
                         String prof = document.getString("professor");
                         if (prof != null && !prof.isEmpty()) {
                             professorName.setText(prof);
@@ -171,6 +183,15 @@ public class SubjectDetailsActivity extends ComponentActivity {
                                 addNoteToList(note);
                             }
                         }
+
+                        // LOAD PDFs
+                        List<Map<String, Object>> pdfs = (List<Map<String, Object>>) document.get("pdfFiles");
+                        if (pdfs != null) {
+                            for (Map<String, Object> pdf : pdfs) {
+                                addPdfToList((String) pdf.get("name"), (String) pdf.get("base64"));
+                            }
+                        }
+
                     } else {
                         Toast.makeText(this, "Subject not found", Toast.LENGTH_SHORT).show();
                     }
@@ -178,6 +199,195 @@ public class SubjectDetailsActivity extends ComponentActivity {
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Error loading details: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
+
+
+
+    private void pickPdfFile() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("application/pdf");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(intent, PDF_REQUEST_CODE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PDF_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            Uri pdfUri = data.getData();
+            if (pdfUri != null) {
+                showPdfNameDialog(pdfUri);
+            }
+        }
+    }
+
+    private void showPdfNameDialog(Uri pdfUri) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Name this PDF");
+
+        EditText input = new EditText(this);
+        input.setHint("Example: Week 1 Course");
+        input.setPadding(50, 40, 50, 10);
+        builder.setView(input);
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String customName = input.getText().toString().trim();
+            if (customName.isEmpty()) {
+                Toast.makeText(this, "PDF name required", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            encodeAndSavePdf(customName, pdfUri);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        builder.show();
+    }
+
+    private void encodeAndSavePdf(String name, Uri pdfUri) {
+        if (documentId == null) return;
+
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(pdfUri);
+            if (inputStream == null) {
+                Toast.makeText(this, "Cannot read file", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            byte[] bytes = readAllBytes(inputStream);
+            inputStream.close();
+
+            // Convert to Base64
+            String base64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
+
+            savePdfToFirestore(name, base64);
+
+        } catch (Exception e) {
+            Toast.makeText(this, "PDF read failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void savePdfToFirestore(String name, String base64) {
+        db.collection("default")
+                .document(documentId)
+                .get()
+                .addOnSuccessListener(doc -> {
+
+                    List<Map<String, Object>> pdfs = (List<Map<String, Object>>) doc.get("pdfFiles");
+                    if (pdfs == null) pdfs = new ArrayList<>();
+
+                    Map<String, Object> pdfData = new HashMap<>();
+                    pdfData.put("name", name);
+                    pdfData.put("base64", base64);
+
+                    pdfs.add(pdfData);
+
+                    db.collection("default")
+                            .document(documentId)
+                            .update("pdfFiles", pdfs)
+                            .addOnSuccessListener(v -> {
+                                Toast.makeText(this, "PDF saved", Toast.LENGTH_SHORT).show();
+                                addPdfToList(name, base64);
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(this, "Firestore save failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                });
+    }
+
+    private void addPdfToList(String name, String base64) {
+        LinearLayout item = new LinearLayout(this);
+        item.setOrientation(LinearLayout.HORIZONTAL);
+        item.setPadding(16, 12, 16, 12);
+        item.setBackgroundColor(Color.WHITE);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 8, 0, 8);
+        item.setLayoutParams(params);
+
+        TextView pdfText = new TextView(this);
+        pdfText.setText("📄 " + name);
+        pdfText.setTextSize(16);
+        pdfText.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
+        pdfText.setOnClickListener(v -> openPdfFromBase64(name, base64));
+
+        Button deleteBtn = new Button(this);
+        deleteBtn.setText("Delete");
+        deleteBtn.setTextSize(12);
+        deleteBtn.setTextColor(Color.RED);
+
+        deleteBtn.setOnClickListener(v -> {
+            pdfList.removeView(item);
+            deletePdfFromFirestore(base64);
+        });
+
+        item.addView(pdfText);
+        item.addView(deleteBtn);
+        pdfList.addView(item);
+    }
+
+    private void openPdfFromBase64(String name, String base64) {
+        try {
+            byte[] bytes = Base64.decode(base64, Base64.NO_WRAP);
+
+            File pdfFile = new File(getCacheDir(), name.replaceAll("\\s+", "_") + ".pdf");
+            FileOutputStream fos = new FileOutputStream(pdfFile);
+            fos.write(bytes);
+            fos.close();
+
+            Uri contentUri = FileProvider.getUriForFile(
+                    this,
+                    getApplicationContext().getPackageName() + ".fileprovider",
+                    pdfFile
+            );
+
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(contentUri, "application/pdf");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            startActivity(Intent.createChooser(intent, "Open PDF"));
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Open failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void deletePdfFromFirestore(String base64) {
+        if (documentId == null) return;
+
+        db.collection("default")
+                .document(documentId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    List<Map<String, Object>> pdfs = (List<Map<String, Object>>) doc.get("pdfFiles");
+                    if (pdfs != null) {
+                        pdfs.removeIf(p -> base64.equals(p.get("base64")));
+
+                        db.collection("default")
+                                .document(documentId)
+                                .update("pdfFiles", pdfs)
+                                .addOnSuccessListener(v ->
+                                        Toast.makeText(this, "PDF deleted", Toast.LENGTH_SHORT).show());
+                    }
+                });
+    }
+
+    private byte[] readAllBytes(InputStream inputStream) throws Exception {
+        ArrayList<Byte> buffer = new ArrayList<>();
+        int b;
+        while ((b = inputStream.read()) != -1) {
+            buffer.add((byte) b);
+        }
+        byte[] bytes = new byte[buffer.size()];
+        for (int i = 0; i < buffer.size(); i++) {
+            bytes[i] = buffer.get(i);
+        }
+        return bytes;
+    }
+
 
     private void showEditDialog(String title, String currentValue, String field) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -265,10 +475,8 @@ public class SubjectDetailsActivity extends ComponentActivity {
 
             dot.setOnClickListener(v -> {
                 if (classIndex < attendedClasses) {
-                    // Mark as absent
                     attendedClasses--;
                 } else if (classIndex == attendedClasses) {
-                    // Mark as attended
                     attendedClasses++;
                 }
                 updateFieldInFirebase("attendedClasses", attendedClasses);

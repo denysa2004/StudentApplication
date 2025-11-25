@@ -355,6 +355,25 @@
                 android:orientation="vertical">
                 <!-- Notes will be added dynamically -->
             </LinearLayout>
+
+            <Button
+                android:id="@+id/addPdfButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add PDF"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="#D8B4E2"
+                android:padding="8dp"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"/>
+
+            <LinearLayout
+                android:id="@+id/pdfList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp" />
+
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
