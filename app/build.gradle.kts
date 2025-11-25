@@ -63,5 +63,6 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth:23.0.0")
     implementation("com.google.firebase:firebase-firestore:25.1.0")
+    implementation("com.google.firebase:firebase-storage:20.3.0")
 //    implementation("com.google.firebase:firebase-analytics:22.1.2")
 }
