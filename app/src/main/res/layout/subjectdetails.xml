@@ -112,21 +112,28 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
+            <org.osmdroid.views.MapView
+                android:id="@+id/mapView"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+
             <TextView
                 android:id="@+id/locationText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Not set"
+                android:text="No location set"
                 android:textSize="16sp" />
 
             <Button
-                android:id="@+id/editLocationButton"
+                android:id="@+id/pickLocationButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:backgroundTint="#D8B4E2"
-                android:text="Edit"
+                android:text="Pick Location"
                 android:textColor="@android:color/white" />
         </LinearLayout>
 
@@ -291,7 +298,7 @@
 
                 <TextView
                     android:id="@+id/finalGradeText"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Not set"
