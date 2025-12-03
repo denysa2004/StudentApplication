@@ -202,11 +202,27 @@ public class SubjectDetailsActivity extends ComponentActivity {
                             professorName.setText(prof);
                         }
 
-                        GeoPoint geoPoint = document.getGeoPoint("location");
+                        Object locationObj = document.get("location");
                         String locationName = document.getString("locationName");
-                        if (geoPoint != null) {
+
+                        if (locationObj instanceof GeoPoint) {
+                            GeoPoint geoPoint = (GeoPoint) locationObj;
                             updateLocation(geoPoint, locationName);
+
+                        } else if (locationObj instanceof Map) {
+                            Map<String, Object> map = (Map<String, Object>) locationObj;
+
+                            if (map.get("latitude") instanceof Number && map.get("longitude") instanceof Number) {
+                                double lat = ((Number) map.get("latitude")).doubleValue();
+                                double lon = ((Number) map.get("longitude")).doubleValue();
+
+                                GeoPoint geoPoint = new GeoPoint(lat, lon);
+                                updateFieldInFirebase("location", geoPoint);
+
+                                updateLocation(geoPoint, locationName);
+                            }
                         }
+
 
                         String examDate = document.getString("examDate");
                         if (examDate != null && !examDate.isEmpty()) {
